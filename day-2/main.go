@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func readLines(path string) ([]string, error) {
@@ -23,14 +24,10 @@ func readLines(path string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-type GameSet struct {
-	redCount   int
-	greenCount int
-	blueCount  int
-}
-
-type GameState struct {
-	sets []GameSet
+type GameMax struct {
+	redMax   int
+	greenMax int
+	blueMax  int
 }
 
 func main() {
@@ -40,37 +37,65 @@ func main() {
 		fmt.Println(err)
 	}
 
+	totalSum := 0
 	for _, line := range lines {
 		l := 0
 		r := 0
 
-		num := ""
-		color := ""
+		var currMax GameMax
+		currSubStr := ""
+		currNum := 0
+		for r < len(line) {
+			// put the left pointer at the start of the real string
+			if line[r] == ':' && l == 0 {
+				l = r + 2
+				r++
 
-		for i := 0; i < len(line); i++ {
+				// if the left value is set then we can read from the right pointer
+			} else if l != 0 {
 
-			if l != 0 && r != 0 && num == "" {
-				num = line[l:r]
+				if line[r] == ' ' {
+					i, err := strconv.Atoi(currSubStr)
+					if err == nil {
+						currNum = i
+						currSubStr = ""
+					}
+
+				} else if line[r] == ',' || line[r] == ';' || r == len(line)-1 {
+					if r == len(line)-1 {
+						currSubStr += string(line[r])
+					}
+
+					switch currSubStr {
+					case "red":
+						if currNum > currMax.redMax {
+							currMax.redMax = currNum
+						}
+					case "green":
+						if currNum > currMax.greenMax {
+							currMax.greenMax = currNum
+						}
+					case "blue":
+						if currNum > currMax.blueMax {
+							currMax.blueMax = currNum
+						}
+					default:
+					}
+
+					currSubStr = ""
+				} else {
+					currSubStr += string(line[r])
+				}
 			}
 
-			if line[i] == ',' {
-				color = line[r+1 : i]
-				break
-			}
-
-			if line[i] == ':' && l == 0 {
-				l = i + 2
-				i = l
-			}
-			if line[i] == ' ' && r == 0 && l != 0 {
-
-				r = i
-			}
-
+			r++
 		}
 
-		fmt.Println(num, color)
+		power := currMax.redMax * currMax.greenMax * currMax.blueMax
+		totalSum += power
+		fmt.Println(totalSum)
 
 	}
 
+	fmt.Println(totalSum)
 }
